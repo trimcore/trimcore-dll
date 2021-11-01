@@ -17,6 +17,7 @@ namespace TRIMCORE {
         std::size_t     length = 0;
         LCID            locale = 0; // 0 usually means exactly (or technical variation of) LOCALE_INVARIANT
         DWORD           flags = 0; // value-specific flags
+        HMODULE         module = NULL; // calling module, source of resources, if any
 
     // out:
         std::uint8_t    quoted = 1;

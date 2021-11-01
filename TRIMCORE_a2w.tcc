@@ -37,7 +37,7 @@ inline std::wstring TRIMCORE::a2wSzWithReserve (const char * string, std::size_t
         auto n = MultiByteToWideChar (CP_ACP, 0, string, -1, NULL, 0);
         if (n > 1) {
             s.reserve (n - 1 + extra);
-            s.resize (n - 1); // do not duplicated NUL-terminator
+            s.resize (n - 1); // do not duplicate NUL-terminator
             MultiByteToWideChar (CP_ACP, 0, string, -1, &s [0], n);
         }
     }

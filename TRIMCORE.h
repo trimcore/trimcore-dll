@@ -14,22 +14,18 @@ extern "C" IMAGE_DOS_HEADER __ImageBase;
 #define TRIMCORE TRIMCORE
 
 #ifdef _WIN32
-#ifdef _MSC_VER
-#if defined(_M_ARM64)
-#define ARCHITECTURE "arm-64"
-#elif defined(_M_ARM)
-#define ARCHITECTURE "arm-32"
-#elif defined(_M_X64)
+#if defined(_M_ARM64) || defined(__aarch64__)
+#define ARCHITECTURE "AArch64"
+#define IMAGE_FILE_MACHINE_COMPILE_ARCHITECTURE IMAGE_FILE_MACHINE_ARM64 // 0xAA64
+#elif defined(_M_ARM) || defined(__arm__)
+#define ARCHITECTURE "AArch32"
+#define IMAGE_FILE_MACHINE_COMPILE_ARCHITECTURE IMAGE_FILE_MACHINE_ARMNT // 0x01C4
+#elif defined(_M_X64) || defined(_WIN64) 
 #define ARCHITECTURE "x86-64"
+#define IMAGE_FILE_MACHINE_COMPILE_ARCHITECTURE IMAGE_FILE_MACHINE_AMD64 // 0x8664
 #else
 #define ARCHITECTURE "x86-32"
-#endif
-#else
-#if defined(_WIN64)
-#define ARCHITECTURE "x86-64"
-#else
-#define ARCHITECTURE "x86-32"
-#endif
+#define IMAGE_FILE_MACHINE_COMPILE_ARCHITECTURE IMAGE_FILE_MACHINE_I386  // 0x014C
 #endif
 #endif
 
@@ -68,6 +64,8 @@ static const char BUILD_TIMESTAMP [] = {
 #include "TRIMCORE_Describe.h"
 #include "TRIMCORE_ConsoleInfo.h"
 
+#include "TRIMCORE_SysInfo.h"
+#include "TRIMCORE_ThreadName.h"
 #include "TRIMCORE_Now.h"
 #include "TRIMCORE_Log.h"
 #include "TRIMCORE_Log_Provider.h"

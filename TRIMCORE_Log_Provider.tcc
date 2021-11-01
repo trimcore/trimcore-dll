@@ -8,7 +8,11 @@ inline TRIMCORE::Log::Provider::Provider (Log * logptr, const char (&object) [N]
     : logptr (logptr)
     , identity { object, prefix, std::move (name) } {
 
-    this->report (Log::Level::Info, Log::LogSystemEvents::ObjectConstructed);
+    if (N && object [N] == '_') {
+        this->report (Log::Level::Trace, Log::LogSystemEvents::ObjectConstructed);
+    } else {
+        this->report (Log::Level::Info, Log::LogSystemEvents::ObjectConstructed);
+    }
 }
 
 template <std::size_t N>
@@ -19,7 +23,11 @@ inline TRIMCORE::Log::Provider::Provider (Log * logptr, const char (&object) [N]
                                       : Rsrc::StructuredStringTable::ID ((std::uint8_t) l1_or_offset),
                  std::move (name) } {
 
-    this->report (Log::Level::Info, Log::LogSystemEvents::ObjectConstructed);
+    if (N && object [N] == '_') {
+        this->report (Log::Level::Trace, Log::LogSystemEvents::ObjectConstructed);
+    } else {
+        this->report (Log::Level::Info, Log::LogSystemEvents::ObjectConstructed);
+    }
 }
 
 // move and copy
@@ -68,6 +76,11 @@ inline TRIMCORE::Log::Provider & TRIMCORE::Log::Provider::operator = (const Prov
 }
 
 inline TRIMCORE::Log::Provider::~Provider () noexcept {
+    if (this->identity.object && std::string_view (this->identity.object).ends_with ('_')) {
+        this->report (Log::Level::Trace, Log::LogSystemEvents::ObjectDestroyed);
+        return;
+    }
+
     if (this->identity.instance.empty () || this->identity.instance [0] != L'\x2020') {
         this->report (Log::Level::Info, Log::LogSystemEvents::ObjectDestroyed);
     } else {

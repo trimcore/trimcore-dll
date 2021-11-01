@@ -35,6 +35,7 @@ namespace TRIMCORE {
         class Provider;
 
         // Exception
+        //  - 
         //  - see TRIMCORE_Log_Exception.hpp
         //
         class Exception;
@@ -55,10 +56,18 @@ namespace TRIMCORE {
         enum Level : std::int8_t {
             Everything  = 0, // only for setting loglevel
             Trace       = 1, // code trace: codepath, branch, iteration, line
+            InfoLow     = 2,
             Info        = 3, // regular notable cyclic behavior
+            InfoSubstantial = 4,
+            EventLow    = 5,
             Event       = 6, // data or user initiated event
+            EventCrucial = 7,
+            WarningLow  = 8,
             Warning     = 9, // invalid data is type of Warning
+            WarningHigh = 10,
+            ErrorLow    = 11,
             Error       = 12,
+            ErrorSevere = 13,
             Stop        = 14, // above critical errors when functionality or process stops
             Banner      = 15, // displayed always - startup info, version banner, exit status
             Disabled    = 16, // only for setting loglevel, Levels above 15 will not get anywhere
@@ -86,6 +95,7 @@ namespace TRIMCORE {
 
         // level
         //  - only reports of set level or higher are written into specified facility
+        //  
         //
         Level level [FunctionalitiesCount] = {
             Everything, // Memory; do not reduce unless it significantly affects performance
@@ -259,11 +269,11 @@ namespace TRIMCORE {
         inline bool process (Report && report, const EventID &, Args&&... args) noexcept;
 
         template <typename T>
-        inline void replace_argument (std::wstring &, std::wstring, T &&);
-        inline void replace_argument (std::wstring &, std::wstring, std::nullptr_t);
-        inline void replace_arguments (std::wstring &, std::size_t) {}
+        inline void replace_argument (HMODULE, std::wstring &, std::wstring, T &&);
+        inline void replace_argument (HMODULE, std::wstring &, std::wstring, std::nullptr_t);
+        inline void replace_arguments (HMODULE, std::wstring &, std::size_t) {}
         template <typename T, typename... Args>
-        inline void replace_arguments (std::wstring & string, std::size_t total, T && argument, Args && ...remaining);
+        inline void replace_arguments (HMODULE, std::wstring & string, std::size_t total, T && argument, Args && ...remaining);
 
         inline void override_api_error (ApiError &) {}
         template <typename... Args>

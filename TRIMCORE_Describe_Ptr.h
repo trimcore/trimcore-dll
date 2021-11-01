@@ -6,13 +6,15 @@ namespace TRIMCORE {
     // Describe pointer
     //  - supported format parameters:
     //     - details - attempts to localize the pointer, appends results as follow:
-    //        - global/function/resource pointers: "!module.dll[.section]"
+    //        - global/function/resource pointers: "!module.dll[.section+offset]"
     //           - sections names are retrieved from module header, typically are:
     //              - .text for code,
     //              - .rdata for constants
     //              - .data for global
     //              - .rsrc for resources
-    //        - pointer to stack: "!module.dll:12345" - module that created the thread and thread ID
+    //           - offset is hexadecimal offset into the section
+    //        - pointer to stack: "!module.dll:12345-offset" - module that created the thread and thread info
+    //           - number represents thread ID, offset is hexadecimal offset into the stack
     //           - if present, thread's description is appended enclosed in double quotes
     //        - process heap pointer: ":heap"
 
