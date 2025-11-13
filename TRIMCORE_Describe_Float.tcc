@@ -1,22 +1,48 @@
 #ifndef TRIMCORE_DLL_DESCRIBE_FLOAT_TCC
 #define TRIMCORE_DLL_DESCRIBE_FLOAT_TCC
 
-template <typename T>
-inline std::wstring TRIMCORE::DescribeFundamentalFloat (T number, DescriptionFormatting * parameters) {
-    char tmp [64];
-    if (parameters) {
-        // TODO: parse parameters, if L or $ call API
+#include <cstdint>
 
-        std::chars_format fmt {};
-        int precission = 0;
-        if (false) { // if parsed format?
+namespace TRIMCORE::Implementation {
+    TRIMCORE_DLL_IMPORT std::size_t TRIMCORE_APIENTRY DescF32 (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, float value) noexcept;
+    TRIMCORE_DLL_IMPORT std::size_t TRIMCORE_APIENTRY DescF64 (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, double value) noexcept;
+    TRIMCORE_DLL_IMPORT std::size_t TRIMCORE_APIENTRY DescF64L (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, long double value) noexcept;
+}
 
-            std::to_chars (tmp, tmp + sizeof tmp, number, fmt, precission);
-            return a2w (tmp);
-        }
+inline std::wstring TRIMCORE::Describe (float number, DescriptionFormatting * format) {
+    if (format && format->length) {
+        Temporary64kB <wchar_t> buffer;
+        auto length = Implementation::DescF32 (buffer.data (), buffer.size (), format, number);
+        return std::wstring (buffer.data (), length);
+    } else {
+        wchar_t buffer [96];
+        auto length = Implementation::DescF32 (buffer, sizeof buffer / sizeof buffer [0], format, number);
+        return std::wstring (buffer, length);
     }
-    auto r = std::to_chars (tmp, tmp + sizeof tmp, number);
-    return Describe (std::string_view (tmp, r.ptr - tmp), parameters);
+}
+
+inline std::wstring TRIMCORE::Describe (double number, DescriptionFormatting * format) {
+    if (format && format->length) {
+        Temporary64kB <wchar_t> buffer;
+        auto length = Implementation::DescF64 (buffer.data (), buffer.size (), format, number);
+        return std::wstring (buffer.data (), length);
+    } else {
+        wchar_t buffer [384];
+        auto length = Implementation::DescF64 (buffer, sizeof buffer / sizeof buffer [0], format, number);
+        return std::wstring (buffer, length);
+    }
+}
+
+inline std::wstring TRIMCORE::Describe (long double number, DescriptionFormatting * format) {
+    if (format && format->length) {
+        Temporary64kB <wchar_t> buffer;
+        auto length = Implementation::DescF64L (buffer.data (), buffer.size (), format, number);
+        return std::wstring (buffer.data (), length);
+    } else {
+        wchar_t buffer [384];
+        auto length = Implementation::DescF64L (buffer, sizeof buffer / sizeof buffer [0], format, number);
+        return std::wstring (buffer, length);
+    }
 }
 
 #endif

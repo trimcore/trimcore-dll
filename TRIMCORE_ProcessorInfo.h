@@ -1,0 +1,9 @@
+#ifndef TRIMCORE_DLL_PROCESSOR_INFO_H
+#define TRIMCORE_DLL_PROCESSOR_INFO_H
+
+namespace TRIMCORE {
+
+}
+
+#endif
+

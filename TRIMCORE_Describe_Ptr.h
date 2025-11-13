@@ -22,16 +22,6 @@ namespace TRIMCORE {
     inline std::wstring Describe (void * ptr, DescriptionFormatting * format = nullptr) {
         return Describe (const_cast <const void *> (ptr), format);
     }
-
-    // DescriptionLengthEst pointer
-    //  - 64-bit is truncated to 48 actually used bits
-
-    inline std::size_t DescriptionLengthEst (const void *) {
-        return (sizeof (void *) > sizeof (std::uint32_t)) ? 12 : 8;
-    }
-    inline std::size_t DescriptionLengthEst (void * p) {
-        return DescriptionLengthEst (const_cast <const void *> (p));
-    }
 }
 
 #include "TRIMCORE_Describe_Ptr.tcc"

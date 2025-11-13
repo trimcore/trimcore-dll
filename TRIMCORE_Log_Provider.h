@@ -12,90 +12,99 @@
 //  - use virtual inheritance so that final object has only one Log::Provider
 //
 class TRIMCORE::Log::Provider {
-    Log * logptr = nullptr;
+    Log * logptr;
 public:
     Log::Identity identity;
    
 public:
 
-    // constructor - usage: Object::Object () : Log::Provider ( [&log], "object", { [L1],[L2],[L3],[L4],[L5],[L6] },  L"short object description");
-    //  - 'object' type name stays fixed, static constant string literal required
-    //  - single-level parameter is special, when L1 >= 256, then L1 is Rsrc STRINGTABLE ID offset, EventID in this->report must be < 256
-    //  - optional uint8_t L1...L6 specify string tree prefix for the object
-    //  - optional Log* specifies target log object; process log is used by default
+    // constructor - usage: Object::Object () : Log::Provider ( [&log], "object", [offset | "string.rsrc.block.name"], L"description");
+    //  - 'object' type name (this->identity.object)
+    //     - short class/type name displayed in log/console prefix, as the source of the event
+    //     - fixed, static constant string literal required
+    //  - offset | "string.rsrc.block.name" (this->identity.prefix)
+    //     - defines offset of log message resource string IDs
+    //     - offset - fixed uint32_t at which the appropriate STRINGTABLE IDs start
+    //     - "string.rsrc.block.name" - string resource block name
+    //  - description (this->identity.instance)
+    //     - name of a particular object (if 'object' was "Connection" then 'description' could be "192.168.1.2:123")
+    //     - can be changed at any time
+    //  - optional Log* specifies the log object, into which
+    //     - by default, the main process log is used
 
     template <std::size_t N>
-    inline Provider (const char (&object) [N], std::wstring name = std::wstring ())
-        : Provider (nullptr, object, name, Rsrc::StructuredStringTable::ID ()) {};
+    inline Provider (const char (&object) [N])
+        : Provider (&::TRIMCORE::log, object, 0, {}) {};
 
     template <std::size_t N>
-    inline Provider (const char (&object) [N], std::uint64_t l1_or_id_offset, std::wstring name = std::wstring ())
-        : Provider (nullptr, object, l1_or_id_offset, name) {};
+    inline Provider (const char (&object) [N], std::wstring description)
+        : Provider (&::TRIMCORE::log, object, 0, description) {};
 
     template <std::size_t N>
-    inline Provider (const char (&object) [N], std::uint8_t l1, std::uint8_t l2, std::wstring name = std::wstring ())
-        : Provider (nullptr, object, name, Rsrc::StructuredStringTable::ID (l1, l2)) {};
+    inline Provider (const char (&object) [N], std::uint32_t rsrc_offset)
+        : Provider (&::TRIMCORE::log, object, rsrc_offset, {}) {};
+
+    template <std::size_t N, std::size_t M>
+    inline Provider (const char (&object) [N], const char (&rsrc_block_name) [M])
+        : Provider (&::TRIMCORE::log, object, Implementation::RsrcStrBlockA (NULL, 0, &rsrc_block_name [0], M - 1), {}) {};
 
     template <std::size_t N>
-    inline Provider (const char (&object) [N], std::uint8_t l1, std::uint8_t l2, std::uint8_t l3, std::wstring name = std::wstring ())
-        : Provider (nullptr, object, name, Rsrc::StructuredStringTable::ID (l1, l2, l3)) {};
+    inline Provider (const char (&object) [N], std::uint32_t rsrc_offset, std::wstring description)
+        : Provider (&::TRIMCORE::log, object, rsrc_offset, description) {};
 
-    template <std::size_t N>
-    inline Provider (const char (&object) [N], std::uint8_t l1, std::uint8_t l2, std::uint8_t l3, std::uint8_t l4, std::wstring name = std::wstring ())
-        : Provider (nullptr, object, name, Rsrc::StructuredStringTable::ID (l1, l2, l3, l4)) {};
-
-    template <std::size_t N>
-    inline Provider (const char (&object) [N], std::uint8_t l1, std::uint8_t l2, std::uint8_t l3, std::uint8_t l4, std::uint8_t l5, std::wstring name = std::wstring ())
-        : Provider (nullptr, object, name, Rsrc::StructuredStringTable::ID (l1, l2, l3, l4, l5)) {};
-
-    template <std::size_t N>
-    inline Provider (const char (&object) [N], std::uint8_t l1, std::uint8_t l2, std::uint8_t l3, std::uint8_t l4, std::uint8_t l5, std::uint8_t l6, std::wstring name = std::wstring ())
-        : Provider (nullptr, object, name, Rsrc::StructuredStringTable::ID (l1, l2, l3, l4, l5, l6)) {};
+    template <std::size_t N, std::size_t M>
+    inline Provider (const char (&object) [N], const char (&rsrc_block_name) [M], std::wstring description)
+        : Provider (&::TRIMCORE::log, object, Implementation::RsrcStrBlockA (NULL, 0, &rsrc_block_name [0], M - 1), description) {};
 
     // same constructors, but with different (non-main) log
 
     template <std::size_t N>
-    inline Provider (Log * log, const char (&object) [N], std::wstring name = std::wstring ())
-        : Provider (log, object, name, Rsrc::StructuredStringTable::ID ()) {};
+    inline Provider (Log * log, const char (&object) [N])
+        : Provider (log, object, 0, {}) {};
 
     template <std::size_t N>
-    inline Provider (Log * log, const char (&object) [N], std::uint64_t l1_or_id_offset, std::wstring name = std::wstring ());
+    inline Provider (Log * log, const char (&object) [N], std::wstring description)
+        : Provider (log, object, 0, description) {};
 
     template <std::size_t N>
-    inline Provider (Log * log, const char (&object) [N], std::uint8_t l1, std::uint8_t l2, std::wstring name = std::wstring ())
-        : Provider (log, object, name, Rsrc::StructuredStringTable::ID (l1, l2)) {};
+    inline Provider (Log * log, const char (&object) [N], std::uint32_t rsrc_offset)
+        : Provider (log, object, rsrc_offset, {}) {};
+
+    template <std::size_t N, std::size_t M>
+    inline Provider (Log * log, const char (&object) [N], const char (&rsrc_block_name) [M])
+        : Provider (log, object, Implementation::RsrcStrBlockA ((HMODULE) &__ImageBase, 0, &rsrc_block_name [0], M - 1), {}) {};
+
+    template <std::size_t N, std::size_t M>
+    inline Provider (Log * log, const char (&object) [N], const char (&rsrc_block_name) [M], std::wstring description)
+        : Provider (log, object, Implementation::RsrcStrBlockA ((HMODULE) &__ImageBase, 0, &rsrc_block_name [0], M - 1), description) {};
+
+    // the main constructor, all other forward to this one
 
     template <std::size_t N>
-    inline Provider (Log * log, const char (&object) [N], std::uint8_t l1, std::uint8_t l2, std::uint8_t l3, std::wstring name = std::wstring ())
-        : Provider (log, object, name, Rsrc::StructuredStringTable::ID (l1, l2, l3)) {};
-
-    template <std::size_t N>
-    inline Provider (Log * log, const char (&object) [N], std::uint8_t l1, std::uint8_t l2, std::uint8_t l3, std::uint8_t l4, std::wstring name = std::wstring ())
-        : Provider (log, object, name, Rsrc::StructuredStringTable::ID (l1, l2, l3, l4)) {};
-
-    template <std::size_t N>
-    inline Provider (Log * log, const char (&object) [N], std::uint8_t l1, std::uint8_t l2, std::uint8_t l3, std::uint8_t l4, std::uint8_t l5, std::wstring name = std::wstring ())
-        : Provider (log, object, name, Rsrc::StructuredStringTable::ID (l1, l2, l3, l4, l5)) {};
-
-    template <std::size_t N>
-    inline Provider (Log * log, const char (&object) [N], std::uint8_t l1, std::uint8_t l2, std::uint8_t l3, std::uint8_t l4, std::uint8_t l5, std::uint8_t l6, std::wstring name = std::wstring ())
-        : Provider (log, object, name, Rsrc::StructuredStringTable::ID (l1, l2, l3, l4, l5, l6)) {};
-
-private:
-    friend class Exception;
-
-    template <std::size_t N>
-    inline Provider (Log *, const char (&object) [N], std::wstring name, Rsrc::StructuredStringTable::ID prefix);
+    inline Provider (Log *, const char (&object) [N], std::uint32_t rsrc_offset, std::wstring description);
 
 protected:
+    friend class Exception;
 
     // RegisterLogProviderContext
     //  - registers additional 'classname' and overriding 'prefix' to use for "this->report (this, ...)" calls
     //  - enabled different sub-objects in inheritance hierarchies to use their own 'prefix' and differentiate them in log file
     //
     template <std::size_t N>
-    static inline void RegisterLogProviderContext (const void * this_, const char (&classname) [N], Log::EventID prefix) noexcept {
-        Implementation::LogSetCtx (this_, classname, prefix);
+    static inline void RegisterLogProviderContext (const void * this_, const char (&classname) [N], std::uint32_t prefix) noexcept {
+        Implementation::LogSetCtx (this_, classname, (HMODULE) &__ImageBase, prefix);
+    }
+    template <std::size_t N, std::size_t M>
+    static inline void RegisterLogProviderContext (const void * this_, const char (&classname) [N], const char (&rsrc_prefix_name) [M]) noexcept {
+        Implementation::LogSetCtx (this_, classname,
+                                   (HMODULE) &__ImageBase,
+                                   Implementation::RsrcStrBlockA ((HMODULE) &__ImageBase, 0, &rsrc_prefix_name [0], M - 1));
+    }
+    template <std::size_t N, std::size_t M>
+    static inline void RegisterLogProviderContext (const void * this_, const char (&classname) [N], const wchar_t (&rsrc_prefix_name) [M]) noexcept {
+        Implementation::LogSetCtx (this_, classname,
+                                   (HMODULE) &__ImageBase,
+                                   Implementation::RsrcStrBlockW ((HMODULE) &__ImageBase, 0, &rsrc_prefix_name [0], M - 1));
     }
     static inline void ReleaseLogProviderContext (const void * this_) noexcept {
         Implementation::LogClrCtx (this_);
@@ -103,7 +112,7 @@ protected:
 
 public:
 
-    // move semantics, moved-from objects report on log level 'Info - 1' instead 'Info'
+    // move semantics, moved-from objects report on log level 'InfoLow' instead 'Info'
 
     inline Provider (Provider && from) noexcept;
     inline Provider (const Provider & from);

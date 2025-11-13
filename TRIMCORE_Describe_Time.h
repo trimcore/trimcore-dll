@@ -11,20 +11,20 @@ namespace TRIMCORE {
     //     - T24<xxx> - time, force 24 hour format
     //     - ST - time without seconds
     //     - ms - display milliseconds
+    //     - ns - display nanoseconds
     //     - L - use user's default locale 
-    //     - L<xxx> - use locale xxx, where xxx is either name (en-US) or number 0x0405
+    //     - L<xxx> - use locale xxx, where xxx is empty (local), name (en-US), number (0x0405) or "system"
+    //     - TZ - convert UTC to local time
+    //     - TZ<+1:45> - convert to local time using provided timezone bias
+    //     - duration - displays value in a duration format
+    //        - numeric + and +! parameters can be used
+    //        - duration<CPU> - displays duration in progressive format
+    //     - U - upgrades ':' symbol to UNICODE one, which is slightly nicer
     //  - default format is "D<db>,T24<db>,ms"
 
     inline std::wstring Describe (const std::tm &, DescriptionFormatting * format = nullptr);
     inline std::wstring Describe (const FILETIME &, DescriptionFormatting * format = nullptr);
     inline std::wstring Describe (const SYSTEMTIME &, DescriptionFormatting * format = nullptr);
-
-    // DescriptionLengthEst
-    //  - length of default <db> formatted string: "%04u-%02u-%02u %02u:%02u:%02u.%03u"
-
-    inline std::size_t DescriptionLengthEst (const std::tm &) { return 24; }
-    inline std::size_t DescriptionLengthEst (const FILETIME &) { return 24; }
-    inline std::size_t DescriptionLengthEst (const SYSTEMTIME &) { return 24; }
 }
 
 #include "TRIMCORE_Describe_Time.tcc"

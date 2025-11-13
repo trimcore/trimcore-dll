@@ -46,12 +46,16 @@ namespace TRIMCORE {
     //
     inline std::wstring Describe (ConsoleInfo::Redirection r, DescriptionFormatting * format = nullptr) {
         switch (r) {
-            case ConsoleInfo::None: return Describe (L"-", format);
-            case ConsoleInfo::File: return Describe (L"file", format);
-            case ConsoleInfo::Pipe: return Describe (L"pipe", format);
-            case ConsoleInfo::NoConsole: return Describe (L"null", format);
+            case ConsoleInfo::None: return Describe (L"Console", format);
+            case ConsoleInfo::File: return Describe (L"File", format);
+            case ConsoleInfo::Pipe: return Describe (L"Pipe", format);
+            case ConsoleInfo::NoConsole: return Describe (L"NULL", format);
         }
         return Describe ((std::uint8_t) r, format);
+    }
+
+    inline Serialized Serialize (const ConsoleInfo::Redirection & r, Temporary64kB <std::uint8_t> &) {
+        return SerializeTrivially ('conr', r);
     }
 
     // Describe ConsoleInfo
@@ -66,16 +70,23 @@ namespace TRIMCORE {
         return s;
     }
 
+    // Serialize ConsoleInfo
+    //  -
+    //
+    inline Serialized Serialize (const ConsoleInfo & info, Temporary64kB <std::uint8_t> &) {
+        return SerializeTrivially ('con', info);
+    }
+
     // EnableConsoleVTMode
     //  - attempts to enable VT mode for RGB colors in console
     //  - returns true if supported and successfully enabled
     //
-    TRIMCORE_DLL_IMPORT bool EnableConsoleVTMode ();
+    TRIMCORE_DLL_IMPORT bool TRIMCORE_APIENTRY EnableConsoleVTMode ();
 
     // UpdateConsoleInfo
     //  - 
     //
-    TRIMCORE_DLL_IMPORT void UpdateConsoleInfo (ConsoleInfo *) noexcept;
+    TRIMCORE_DLL_IMPORT void TRIMCORE_APIENTRY UpdateConsoleInfo (ConsoleInfo *) noexcept;
 }
 
 // console

@@ -10,15 +10,20 @@ namespace TRIMCORE {
     //  - 'ull' is number of 100-nanosecond intervals since January 1, 1601 (UTC).
     //  - simply solves 64-bit alignment
     //
-    union Timestamp {
-        std::uint64_t ull;
-        FILETIME      ft;
+    struct Timestamp {
+        union {
+            std::uint64_t ull;
+            FILETIME      ft;
+        };
+        explicit operator bool () const {
+            return this->ull != 0;
+        }
     };
 
     // Now
-    //  - returns Windows system timestamp as the union above
+    //  - returns precise Windows system timestamp as the union above
     //
-    TRIMCORE_DLL_IMPORT Timestamp Now ();
+    TRIMCORE_DLL_IMPORT Timestamp TRIMCORE_APIENTRY Now ();
 
     // Describe Timestamp
     //  - forward to already implemented FILETIME rendering
@@ -26,6 +31,10 @@ namespace TRIMCORE {
     inline std::wstring Describe (const Timestamp & ts, DescriptionFormatting * format = nullptr) {
         return Describe (ts.ft, format);
     }
+    inline Serialized Serialize (const Timestamp & ts, Temporary64kB <std::uint8_t> & scratch) {
+        return Serialize (ts.ft, scratch);
+    }
+
 
     // operators
     //  - compare underlying 64-bit integer

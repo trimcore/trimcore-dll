@@ -30,6 +30,10 @@ public:
     template <typename... Args>
     inline Exception (DWORD error, Log::Provider * object, Log::EventID event, Args ...args);
 
+    // copy
+
+    inline Exception (const Exception &) = default;
+
     // movable
 
     inline Exception (Exception && from) noexcept = default;

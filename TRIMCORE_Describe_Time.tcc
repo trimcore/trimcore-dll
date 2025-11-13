@@ -2,8 +2,8 @@
 #define TRIMCORE_DLL_DESCRIBE_TIME_TCC
 
 namespace TRIMCORE::Implementation {
-    TRIMCORE_DLL_IMPORT std::size_t DescFileTime (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, const FILETIME * t) noexcept;
-    TRIMCORE_DLL_IMPORT std::size_t DescSysTime  (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, const SYSTEMTIME * t) noexcept;
+    TRIMCORE_DLL_IMPORT std::size_t TRIMCORE_APIENTRY DescFileTime (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, const FILETIME * t) noexcept;
+    TRIMCORE_DLL_IMPORT std::size_t TRIMCORE_APIENTRY DescSysTime  (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, const SYSTEMTIME * t) noexcept;
 }
 
 inline std::wstring TRIMCORE::Describe (const std::tm & tm, DescriptionFormatting * format) {
@@ -21,13 +21,13 @@ inline std::wstring TRIMCORE::Describe (const std::tm & tm, DescriptionFormattin
 
 inline std::wstring TRIMCORE::Describe (const FILETIME & ft, DescriptionFormatting * format) {
     Temporary64kB <wchar_t> buffer;
-    Implementation::DescFileTime (buffer.data (), buffer.size (), format, &ft);
-    return buffer.data ();
+    auto length = Implementation::DescFileTime (buffer.data (), buffer.size (), format, &ft);
+    return std::wstring (buffer.data (), length);
 }
 inline std::wstring TRIMCORE::Describe (const SYSTEMTIME & st, DescriptionFormatting * format) {
     Temporary64kB <wchar_t> buffer;
-    Implementation::DescSysTime (buffer.data (), buffer.size (), format, &st);
-    return buffer.data ();
+    auto length = Implementation::DescSysTime (buffer.data (), buffer.size (), format, &st);
+    return std::wstring (buffer.data (), length);
 }
 
 #endif

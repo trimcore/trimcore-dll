@@ -2,7 +2,7 @@
 #define TRIMCORE_DLL_DESCRIBE_TCC
 
 namespace TRIMCORE::Implementation {
-    TRIMCORE_DLL_IMPORT void DescApiError (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, DWORD error) noexcept;
+    TRIMCORE_DLL_IMPORT void TRIMCORE_APIENTRY DescApiError (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, DWORD error) noexcept;
 }
 
 inline std::wstring TRIMCORE::Describe (ApiError error, DescriptionFormatting * format) {

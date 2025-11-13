@@ -3,47 +3,30 @@
 
 #include <charconv>
 
-inline TRIMCORE::DescriptionFormatting::Unpacked::Unpacked (const wchar_t * string, std::size_t length) {
-    if (string && length) {
-        std::wstring_view s (string, length);
-        std::wstring_view::size_type o = 0;
-        std::wstring_view::size_type e = 0;
+namespace TRIMCORE::Implementation {
 
-        this->data.reserve (std::count (s.begin (), s.end (), L',') + 1);
+    // private implementation details
+    //  - static exports to maintain ABI stability
 
-        while (auto v = s.find_first_of (L":<,", o) + 1) {
-            auto c = s [v - 1];
-            e = v;
-
-            switch (c) {
-                case L'<': e = s.find (L'>', v); break;
-                case L':': e = s.find (L',', v); break;
-            }
-
-            this->data.push_back ({ s.substr (o, v - 1 - o), s.substr (v, e - v) });
-
-            if (e == std::wstring_view::npos)
-                break;
-
-            if (c == L'<') {
-                ++e; // skip '>'
-            }
-            if (c != L',') {
-                ++e; // skip ','
-            }
-            o = e;
-        }
-        if ((e != std::wstring_view::npos) && (o < s.size ())) {
-            this->data.push_back ({ s.substr (o, s.size () - o), std::wstring_view () });
-        }
-    }
+    TRIMCORE_DLL_IMPORT std::uint16_t TRIMCORE_APIENTRY FmtUnpack (TRIMCORE::DescriptionFormatting::UnpackedParameter * buffer, const wchar_t * data, std::size_t size);
+    TRIMCORE_DLL_IMPORT std::int64_t  TRIMCORE_APIENTRY FmtCvt (const wchar_t * data, std::size_t size, std::int64_t default_);
 }
 
-inline bool TRIMCORE::DescriptionFormatting::Unpacked::get (std::wstring_view name, std::wstring_view * value) const {
-    for (auto & [n, v] : this->data) {
-        if (n == name) {
+inline void TRIMCORE::DescriptionFormatting::ensure () const {
+    if (!this->unpacked_data.allocated ()) {
+        this->unpack ();
+    }
+}
+inline void TRIMCORE::DescriptionFormatting::unpack () const {
+    this->unpacked_size = TRIMCORE::Implementation::FmtUnpack (this->unpacked_data.data (), this->string, this->length);
+}
+
+inline bool TRIMCORE::DescriptionFormatting::get (std::wstring_view name, std::wstring_view * value) const {
+    this->ensure ();
+    for (auto & [n, v] : *this) {
+        if (std::wstring_view (this->string + n.offset, n.length) == name) {
             if (value) {
-                *value = v;
+                *value = std::wstring_view (this->string + v.offset, v.length);
             }
             return true;
         }
@@ -51,45 +34,77 @@ inline bool TRIMCORE::DescriptionFormatting::Unpacked::get (std::wstring_view na
     return false;
 }
 
-inline bool TRIMCORE::DescriptionFormatting::Unpacked::get (std::intptr_t index, std::wstring_view * name, std::wstring_view * value) const {
-    if (index < 0) {
-        index = this->data.size () + index;
+template <std::size_t N>
+inline bool TRIMCORE::DescriptionFormatting::get (const std::wstring_view (&names) [N], std::wstring_view * value, std::wstring_view * which_name) const {
+    this->ensure ();
+    for (auto & [n, v] : *this) {
+        std::wstring_view nn (this->string + n.offset, n.length);
+        std::wstring_view vv (this->string + v.offset, v.length);
+
+        for (auto & name : names) {
+            if (nn == name) {
+                if (value) {
+                    *value = vv;
+                }
+                if (which_name) {
+                    *which_name = name;
+                }
+                return true;
+            }
+        }
     }
-    if ((std::size_t) index < this->data.size ()) {
+    return false;
+}
+
+template <std::size_t N>
+inline bool TRIMCORE::DescriptionFormatting::get (const std::wstring_view (&names) [N], std::wstring_view * value, std::size_t * which_index) const {
+    this->ensure ();
+
+    std::size_t index = 0;
+    for (auto & [n, v] : *this) {
+        std::wstring_view nn (this->string + n.offset, n.length);
+        std::wstring_view vv (this->string + v.offset, v.length);
+
+        for (auto & name : names) {
+            if (nn == name) {
+                if (value) {
+                    *value = vv;
+                }
+                if (which_index) {
+                    *which_index = index;
+                }
+                return true;
+            }
+            ++index;
+        }
+    }
+    return false;
+}
+
+inline bool TRIMCORE::DescriptionFormatting::get (std::intptr_t index, std::wstring_view * name, std::wstring_view * value) const {
+    this->ensure ();
+    if (index < 0) {
+        index = this->unpacked_size + index;
+    }
+    if ((std::size_t) index < this->unpacked_size) {
         if (name) {
-            *name = this->data [index].name;
+            *name = std::wstring_view (this->string + this->unpacked_data [index].name.offset,
+                                                      this->unpacked_data [index].name.length);
         }
         if (value) {
-            *value = this->data [index].value;
+            *value = std::wstring_view (this->string + this->unpacked_data [index].value.offset,
+                                                       this->unpacked_data [index].value.length);
         }
         return true;
     } else
         return false;
 }
 
-inline long long TRIMCORE::DescriptionFormatting::Unpacked::convert (std::wstring_view number, long long result) {
-    char a [68];
-    auto o = 0u;
-    auto base = 10;
-
-    if (number.starts_with (L"b") || number.starts_with (L"B")) { base = 2; o = 1; }
-    if (number.starts_with (L"0b") || number.starts_with (L"0B")) { base = 2; o = 2; }
-    if (number.starts_with (L"x") || number.starts_with (L"X")) { base = 16; o = 1; }
-    if (number.starts_with (L"0x") || number.starts_with (L"0X")) { base = 16; o = 2; }
-
-    auto i = 0u;
-    for (; i != std::min (sizeof a, number.size () - o); ++i) {
-        if (number [i + o] < 128) {
-            a [i] = (char) number [i + o];
-        } else
-            break;
-    }
-
-    std::from_chars (a, a + i, result, base);
-    return result;
+inline long long TRIMCORE::DescriptionFormatting::convert (std::wstring_view number, long long result) {
+    return TRIMCORE::Implementation::FmtCvt (number.data (), number.size (), result);
 }
 
-inline long long TRIMCORE::DescriptionFormatting::Unpacked::number (int index, long long default_) const {
+inline long long TRIMCORE::DescriptionFormatting::number (int index, long long default_) const {
     std::wstring_view name;
     if (this->get (index, &name, nullptr)) {
         return this->convert (name, default_);
@@ -97,9 +112,18 @@ inline long long TRIMCORE::DescriptionFormatting::Unpacked::number (int index, l
         return default_;
 }
 
-inline long long TRIMCORE::DescriptionFormatting::Unpacked::number (std::wstring_view name, long long default_) const {
+inline long long TRIMCORE::DescriptionFormatting::number (std::wstring_view name, long long default_) const {
     std::wstring_view value;
     if (this->get (name, &value)) {
+        return this->convert (value, default_);
+    } else
+        return default_;
+}
+
+template <std::size_t N>
+inline long long TRIMCORE::DescriptionFormatting::number (const std::wstring_view (&names) [N], long long default_, std::wstring_view * which_name) const {
+    std::wstring_view value;
+    if (this->get (names, &value, which_name)) {
         return this->convert (value, default_);
     } else
         return default_;

@@ -3,8 +3,8 @@
 
 namespace TRIMCORE {
     namespace Implementation {
-        TRIMCORE_DLL_IMPORT bool SetThreadNameImpl (HANDLE h, const wchar_t * name) noexcept;
-        TRIMCORE_DLL_IMPORT std::size_t GetThreadNameImpl (HANDLE h, wchar_t * buffer, std::size_t length) noexcept;
+        TRIMCORE_DLL_IMPORT bool TRIMCORE_APIENTRY SetThreadNameImpl (HANDLE h, const wchar_t * name) noexcept;
+        TRIMCORE_DLL_IMPORT std::size_t TRIMCORE_APIENTRY GetThreadNameImpl (HANDLE h, wchar_t * buffer, std::size_t length) noexcept;
     }
 
     // SetThreadName
@@ -35,16 +35,20 @@ namespace TRIMCORE {
 
     // GetThreadName
     //  - retrieves thread description either from Windows or internal map
-    //  - does NUL-terminate ONLY if there is extra space for the character in the buffer
+    //  - NUL-terminates ONLY if there is extra space for the character in the buffer
     //
     inline std::size_t GetThreadName (HANDLE h, wchar_t * buffer, std::size_t length) noexcept {
         return Implementation::GetThreadNameImpl (h, buffer, length);
     }
 
+#ifdef TRIMCORE_DLL_LOCAL
+    std::wstring GetThreadName (HANDLE h);
+#else
     inline std::wstring GetThreadName (HANDLE h) {
         Temporary64kB <wchar_t> buffer;
         return std::wstring (buffer.data (), GetThreadName (h, buffer.data (), buffer.size ()));
     }
+#endif
 
     inline std::wstring GetThreadName (DWORD id) {
         std::wstring s;

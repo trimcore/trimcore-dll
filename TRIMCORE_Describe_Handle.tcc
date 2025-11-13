@@ -2,9 +2,9 @@
 #define TRIMCORE_DLL_DESCRIBE_HANDLE_TCC
 
 namespace TRIMCORE::Implementation {
-    TRIMCORE_DLL_IMPORT void DescHKEY (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, HKEY) noexcept;
-    // TRIMCORE_DLL_IMPORT void DescHANDLE (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, HANDLE) noexcept;
-    TRIMCORE_DLL_IMPORT void DescHMODULE (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, HMODULE) noexcept;
+    TRIMCORE_DLL_IMPORT void TRIMCORE_APIENTRY DescHKEY (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, HKEY) noexcept;
+    // TRIMCORE_DLL_IMPORT void WINAPI DescHANDLE (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, HANDLE) noexcept;
+    TRIMCORE_DLL_IMPORT void TRIMCORE_APIENTRY DescHMODULE (wchar_t * buffer, std::size_t length, DescriptionFormatting * fmt, HMODULE) noexcept;
 }
 
 inline std::wstring TRIMCORE::Describe (HMODULE module, DescriptionFormatting * format) {

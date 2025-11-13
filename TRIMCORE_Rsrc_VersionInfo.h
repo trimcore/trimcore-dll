@@ -5,22 +5,16 @@
 #include <cstdint>
 
 namespace TRIMCORE::Implementation {
-    struct StringSet {
-        const wchar_t * data;
-        std::uint16_t   size;
-    };
-
-    TRIMCORE_DLL_IMPORT const void * VerInfo (HMODULE, StringSet *);
-    TRIMCORE_DLL_IMPORT const wchar_t * VerStrName (const StringSet *, const wchar_t *);
-    TRIMCORE_DLL_IMPORT const wchar_t * VerStrIndex (const StringSet *, unsigned int);
-    TRIMCORE_DLL_IMPORT bool VerInfoIsValid (const void *);
+    TRIMCORE_DLL_IMPORT const void * TRIMCORE_APIENTRY VerInfo (HMODULE, const wchar_t **, std::size_t *);
+    TRIMCORE_DLL_IMPORT const wchar_t * TRIMCORE_APIENTRY VerStrName (const wchar_t *, std::size_t, const wchar_t *);
+    TRIMCORE_DLL_IMPORT const wchar_t * TRIMCORE_APIENTRY VerStrIndex (const wchar_t *, std::size_t, unsigned int);
+    TRIMCORE_DLL_IMPORT bool TRIMCORE_APIENTRY VerInfoIsValid (const void *);
 }
 
 namespace TRIMCORE::Rsrc {
 
     // VersionNumber
     //  - layout of file/product semantic version numbers stored in VS_FIXEDFILEINFO
-    //  - TODO: string parsing?
     //
     struct VersionNumber {
         std::uint16_t minor;
@@ -31,9 +25,9 @@ namespace TRIMCORE::Rsrc {
     public:
         std::uint64_t as_number () const {
             return (std::uint64_t (this->major) << 48)
-                 | (std::uint64_t (this->minor) << 32)
-                 | (std::uint64_t (this->patch) << 16)
-                 | (std::uint64_t (this->build) << 0);
+                | (std::uint64_t (this->minor) << 32)
+                | (std::uint64_t (this->patch) << 16)
+                | (std::uint64_t (this->build) << 0);
         }
         bool operator == (const VersionNumber & other) const {
             return *reinterpret_cast <const std::uint64_t *> (this)
@@ -48,7 +42,7 @@ namespace TRIMCORE::Rsrc {
 
         // fixed file info
         //  - access through names defined by Windows API
-
+        //
         VS_FIXEDFILEINFO ffi;
 
         // named structure members
@@ -70,10 +64,12 @@ namespace TRIMCORE::Rsrc {
 
             // timestamp
             //  - big endian, otherwise a FILETIME number
-
+            //
             struct {
                 std::uint32_t high;
                 std::uint32_t low;
+
+                operator FILETIME () const { return { this->low, this->high }; }
             } timestamp;
         };
     };
@@ -84,12 +80,15 @@ namespace TRIMCORE::Rsrc {
     //  - better than 'GetFileVersionInfo' which loads the module and copies all the data
     //
     class VersionInfo {
-        Implementation::StringSet strings;
-        const void * ffi;
-        
+        const wchar_t * data;
+        std::size_t     size;
+        const void *    ffi;
+
     public:
+        inline VersionInfo ()
+            : data (nullptr), size (0), ffi (nullptr) {}
         inline explicit VersionInfo (HMODULE hModule)
-            : ffi (Implementation::VerInfo (hModule, &strings)) {}
+            : ffi (Implementation::VerInfo (hModule, &this->data, &this->size)) {}
 
         VersionInfo (const VersionInfo &) = default;
 
@@ -112,10 +111,10 @@ namespace TRIMCORE::Rsrc {
         //  - returns NULL if no such string found
 
         inline const wchar_t * operator [] (const wchar_t * name) const {
-            return Implementation::VerStrName (&this->strings, name);
+            return Implementation::VerStrName (this->data, this->size, name);
         }
         inline const wchar_t * operator [] (unsigned int index) const {
-            return Implementation::VerStrIndex (&this->strings, index);
+            return Implementation::VerStrIndex (this->data, this->size, index);
         }
     };
 }

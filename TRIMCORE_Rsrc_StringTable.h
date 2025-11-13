@@ -2,12 +2,13 @@
 #define TRIMCORE_DLL_RSRC_STRING_H
 
 #include <cstdint>
+#if (defined(__GNUC__) && (__GNUC__ < 8))
+#include <experimental/string_view>
+#else
 #include <string_view>
+#endif
 
 namespace TRIMCORE::Rsrc {
-    class StringTable {
-        // TODO: something like Rsrc::Raw, inherit, fast access
-    };
 
     // String
     //  - same functionality as LoadStringW, but doesn't inadvertly load USER32.dll and GDI32.dll

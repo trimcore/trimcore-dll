@@ -3,9 +3,12 @@
 
 inline std::size_t TRIMCORE::a2w (wchar_t * buffer, std::size_t length, const char * s) noexcept {
     if (s) {
-        auto n = MultiByteToWideChar (CP_ACP, 0, s, -1, buffer, (int) length);
-        if (n > 0)
-            return n - 1; // don't count NUL-terminator
+        if (length > INT_MAX) {
+            length = INT_MAX;
+        }
+        auto n = MultiByteToWideChar (CP_ACP, 0, s, -1, buffer, (int) length) - 1; // don't count NUL-terminator
+        if (n >= 0)
+            return n;
     }
     return 0;
 }
@@ -34,11 +37,11 @@ inline std::size_t TRIMCORE::a2w (wchar_t * buffer, std::size_t length, const st
 inline std::wstring TRIMCORE::a2wSzWithReserve (const char * string, std::size_t extra) {
     std::wstring s;
     if (string) {
-        auto n = MultiByteToWideChar (CP_ACP, 0, string, -1, NULL, 0);
-        if (n > 1) {
-            s.reserve (n - 1 + extra);
-            s.resize (n - 1); // do not duplicate NUL-terminator
-            MultiByteToWideChar (CP_ACP, 0, string, -1, &s [0], n);
+        auto n = MultiByteToWideChar (CP_ACP, 0, string, -1, NULL, 0) - 1; // do not duplicate NUL-terminator
+        if (n > 0) {
+            s.reserve (n + extra);
+            s.resize (n);
+            MultiByteToWideChar (CP_ACP, 0, string, -1, &s [0], n + 1);
         }
     }
     return s;

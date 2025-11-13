@@ -3,7 +3,11 @@
 
 #include <windows.h>
 #include <string>
+#if (defined(__GNUC__) && (__GNUC__ < 8))
+#include <experimental/string_view>
+#else
 #include <string_view>
+#endif
 #include <limits>
 
 namespace TRIMCORE {

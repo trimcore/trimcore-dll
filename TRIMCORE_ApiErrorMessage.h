@@ -8,7 +8,7 @@ namespace TRIMCORE {
     //  - writes NUL-terminated string into 'buffer' of maximum 'length' size
     //  - returns true on success, false if no such string could've been retrieved
     //
-    TRIMCORE_DLL_IMPORT bool ApiErrorMessage (DWORD code, wchar_t * buffer, std::size_t length, DWORD language = 0);
+    TRIMCORE_DLL_IMPORT bool TRIMCORE_APIENTRY ApiErrorMessage (DWORD code, wchar_t * buffer, std::size_t length, DWORD language = 0);
 
     // ApiError
     //  - abstracts GetLastError into separate type
